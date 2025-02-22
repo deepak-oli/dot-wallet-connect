@@ -28,6 +28,7 @@ export default function usePolkadotWallet() {
   };
 
   const connectExtension = async () => {
+    dispatch(actions.setStatus(STATUS.LOADING));
     try {
       const { web3Enable } = await import("@polkadot/extension-dapp");
       const extensions = await documentReadyPromise(() => web3Enable(APP_NAME));

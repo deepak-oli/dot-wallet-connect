@@ -22,7 +22,10 @@ function App() {
   if (status !== STATUS.READY) {
     return (
       <main className="container">
-        <ConnectWallet connectWallet={connectWallet} />
+        <ConnectWallet
+          connectWallet={connectWallet}
+          isLoading={status === STATUS.LOADING}
+        />
       </main>
     );
   }

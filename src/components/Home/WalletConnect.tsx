@@ -2,12 +2,20 @@ import React from "react";
 
 interface ConnectWalletProps {
   connectWallet: () => void;
+  isLoading: boolean;
 }
 
-const ConnectWallet: React.FC<ConnectWalletProps> = ({ connectWallet }) => (
+const ConnectWallet: React.FC<ConnectWalletProps> = ({
+  connectWallet,
+  isLoading,
+}) => (
   <div className="wallet-card">
     <h2 className="wallet-title">Polkadot Wallet</h2>
-    <button className="wallet-button" onClick={connectWallet}>
+    <button
+      className="wallet-button"
+      onClick={connectWallet}
+      disabled={isLoading}
+    >
       Connect Wallet
     </button>
     <p>
