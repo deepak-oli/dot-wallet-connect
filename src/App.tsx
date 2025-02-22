@@ -1,16 +1,16 @@
-import usePolkadotExtension from "./hooks/usePolkadotExtension";
+import { useWalletContext } from "@/hooks/useWalletContext";
 
 function App() {
   const {
     status,
     accounts,
-    handleCurrentAccountSave,
+    saveCurrentAccountAddress,
     currentAccountAddress,
     currentAccount,
     connectWallet,
     disconnectWallet,
     errorMessage,
-  } = usePolkadotExtension();
+  } = useWalletContext();
 
   if (status !== "ready") {
     return <button onClick={connectWallet}>Connect Wallet</button>;
@@ -25,7 +25,7 @@ function App() {
       {accounts && accounts.length > 0 && (
         <select
           onChange={(e) => {
-            handleCurrentAccountSave(e.target.value);
+            saveCurrentAccountAddress(e.target.value);
           }}
           value={currentAccountAddress || ""}
         >

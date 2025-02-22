@@ -1,40 +1,30 @@
-import { useEffect, useState } from "react";
-import {
-  InjectedAccountWithMeta,
-  InjectedExtension,
-} from "@polkadot/extension-inject/types";
+import { useEffect, useReducer } from "react";
+import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { documentReadyPromise } from "@/utils/shared";
-import { APP_NAME } from "@/constants";
+import { APP_NAME, STATUS } from "@/constants";
+import accountStorage from "@/utils/accountStorage";
+import { IState } from "./types";
+import { reducer } from "./reducer";
+import actions from "./actions";
 
-export const STATUS = {
-  READY: "ready",
-  NO_EXTENSION: "no_extension",
-  ERROR: "error",
-} as const;
+const initialState: IState = {
+  status: null,
+  errorMessage: null,
+  injectedExtensions: null,
+  accounts: null,
+  currentAccountAddress: null,
+  injector: null,
+};
 
-type Status = (typeof STATUS)[keyof typeof STATUS] | null;
-
-export default function usePolkadotExtension() {
-  const [status, setStatus] = useState<Status>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [injectedExtensions, setInjectedExtensions] = useState<
-    InjectedExtension[] | null
-  >(null);
-  const [accounts, setAccounts] = useState<InjectedAccountWithMeta[] | null>(
-    null
-  );
-  const [currentAccountAddress, setCurrentAccountAddress] = useState<
-    string | null
-  >(null);
-  const [injector, setInjector] = useState<InjectedExtension | null>(null);
+export default function usePolkadotWallet() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const handleError = (error: unknown, context: string) => {
     const errorMessage = `Error ${context}: ${
       error instanceof Error ? error.message : String(error)
     }`;
-    // console.error(errorMessage);
-    setStatus(STATUS.ERROR);
-    setErrorMessage(errorMessage);
+    dispatch(actions.setStatus(STATUS.ERROR));
+    dispatch(actions.setErrorMessage(errorMessage));
   };
 
   const connectExtension = async () => {
@@ -42,13 +32,13 @@ export default function usePolkadotExtension() {
       const { web3Enable } = await import("@polkadot/extension-dapp");
       const extensions = await documentReadyPromise(() => web3Enable(APP_NAME));
       if (!extensions?.length) {
-        setStatus(STATUS.NO_EXTENSION);
-        setInjector(null);
-        setErrorMessage("No injected extensions found.");
+        dispatch(actions.setStatus(STATUS.NO_EXTENSION));
+        dispatch(actions.setInjectedExtensions(null));
+        dispatch(actions.setErrorMessage("No injected extensions found."));
         return;
       }
 
-      setInjectedExtensions(extensions);
+      dispatch(actions.setInjectedExtensions(extensions));
     } catch (error) {
       handleError(error, "loading Polkadot extensions");
     }
@@ -62,16 +52,16 @@ export default function usePolkadotExtension() {
 
       const unsubscribeAccounts = await web3AccountsSubscribe(
         async (injectedAccounts) => {
-          setAccounts(injectedAccounts);
-
+          dispatch(actions.setAccounts(injectedAccounts));
           if (!injectedAccounts?.length) {
-            setErrorMessage("No connected accounts found.");
-            setStatus(STATUS.READY);
-            handleCurrentAccountSave(null);
+            dispatch(actions.setErrorMessage("No connected accounts found."));
+            dispatch(actions.setStatus(STATUS.READY));
+            saveCurrentAccountAddress(null);
+
             return;
           }
 
-          const savedAddress = localStorage.getItem("currentAccountAddress");
+          const savedAddress = accountStorage.getAddress();
           const savedAccount = injectedAccounts.findIndex(
             (account) => account.address === savedAddress
           );
@@ -83,15 +73,15 @@ export default function usePolkadotExtension() {
             accountAddress = savedAddress!;
           } else {
             accountAddress =
-              currentAccountAddress || injectedAccounts[0]?.address;
+              state.currentAccountAddress || injectedAccounts[0]?.address;
           }
 
-          handleCurrentAccountSave(accountAddress);
-          setErrorMessage(null);
+          saveCurrentAccountAddress(accountAddress);
+          dispatch(actions.setErrorMessage(null));
 
           await fetchInjector(injectedAccounts, accountAddress);
 
-          setStatus(STATUS.READY);
+          dispatch(actions.setStatus(STATUS.READY));
         }
       );
       return unsubscribeAccounts;
@@ -105,10 +95,9 @@ export default function usePolkadotExtension() {
     selectedAddress: string
   ) => {
     if (!accounts?.length || !selectedAddress) {
-      setInjector(null);
+      dispatch(actions.setInjector(null));
       return;
     }
-
     try {
       const { web3FromSource } = await import("@polkadot/extension-dapp");
       const currentAccount = accounts.find(
@@ -116,12 +105,14 @@ export default function usePolkadotExtension() {
       );
 
       if (!currentAccount) {
-        setErrorMessage("No connected account found to get injector.");
+        dispatch(
+          actions.setErrorMessage("No connected account found to get injector.")
+        );
         return;
       }
 
       const newInjector = await web3FromSource(currentAccount.meta.source);
-      setInjector(newInjector);
+      dispatch(actions.setInjector(newInjector));
     } catch (error) {
       handleError(error, "getting injector");
     }
@@ -134,36 +125,39 @@ export default function usePolkadotExtension() {
   };
 
   const disconnectWallet = async () => {
-    if (status !== STATUS.READY) {
+    if (state.status !== STATUS.READY) {
       return;
     }
-    setAccounts(null);
-    handleCurrentAccountSave(null);
-    setInjector(null);
-    setStatus(null);
+    saveCurrentAccountAddress(null);
+    dispatch(actions.setAccounts(null));
+    dispatch(actions.setInjector(null));
+    dispatch(actions.setStatus(null));
   };
 
-  const handleCurrentAccountSave = (address: string | null) => {
+  const saveCurrentAccountAddress = (address: string | null) => {
     if (address) {
-      localStorage.setItem("currentAccountAddress", address);
+      accountStorage.saveAddress(address);
     } else {
-      localStorage.removeItem("currentAccountAddress");
+      accountStorage.removeAddress();
     }
-    setCurrentAccountAddress(address);
+
+    dispatch(actions.setCurrentAccountAddress(address));
+
+    fetchInjector(state.accounts ?? [], address!);
   };
 
   useEffect(() => {
-    const savedCurrentAccountAddress = localStorage.getItem(
-      "currentAccountAddress"
-    );
-
+    const savedCurrentAccountAddress = accountStorage.getAddress();
     if (!savedCurrentAccountAddress) return;
 
     let unsubscribe: undefined | (() => void);
+
     const initWallet = async () => {
       unsubscribe = await connectWallet();
     };
+
     initWallet();
+
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -171,22 +165,19 @@ export default function usePolkadotExtension() {
     };
   }, []);
 
-  useEffect(() => {
-    fetchInjector(accounts ?? [], currentAccountAddress!);
-  }, [currentAccountAddress]);
-
-  const currentAccount = accounts?.find(
-    (account) => account.address === currentAccountAddress
+  const currentAccount = state.accounts?.find(
+    (account) => account.address === state.currentAccountAddress
   );
+
   return {
-    status,
-    errorMessage,
-    injectedExtensions,
-    accounts,
-    currentAccountAddress,
-    handleCurrentAccountSave,
+    status: state.status,
+    errorMessage: state.errorMessage,
+    injectedExtensions: state.injectedExtensions,
+    accounts: state.accounts,
+    currentAccountAddress: state.currentAccountAddress,
+    injector: state.injector,
+    saveCurrentAccountAddress,
     currentAccount,
-    injector,
     connectWallet,
     disconnectWallet,
   };
