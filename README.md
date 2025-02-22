@@ -42,7 +42,7 @@ This is a **Polkadot Wallet Connect** app built with **React 19**, **Vite**, and
 
 ### No Accounts Connected
 
-![Connect Page](screenshots/wallet-connected-with-no-accounts.png.png)
+![Connect Page](screenshots/wallet-connected-with-no-accounts.png)
 
 ## 🚀 Getting Started
 
