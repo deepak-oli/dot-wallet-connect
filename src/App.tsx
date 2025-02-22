@@ -1,4 +1,11 @@
 import { useWalletContext } from "@/hooks/useWalletContext";
+import { STATUS } from "@/constants";
+
+import "./App.css";
+import ErrorMessage from "@/components/ErrorMessage";
+import ConnectWallet from "@/components/Home/WalletConnect";
+import AccountSelector from "@/components/Home/AccountSelector";
+import WalletInfo from "@/components/Home/WalletInfo";
 
 function App() {
   const {
@@ -12,39 +19,37 @@ function App() {
     errorMessage,
   } = useWalletContext();
 
-  if (status !== "ready") {
-    return <button onClick={connectWallet}>Connect Wallet</button>;
+  if (status !== STATUS.READY) {
+    return (
+      <main className="container">
+        <ConnectWallet connectWallet={connectWallet} />
+      </main>
+    );
   }
   return (
-    <>
-      <h1>Polkadot Extension Example</h1>
-      <button onClick={disconnectWallet}>Disconnect Wallet</button>
-      <br />
-      <br />
+    <main className="container">
+      <div className="wallet-card">
+        <h1 className="wallet-title">Polkadot Wallet</h1>
 
-      {accounts && accounts.length > 0 && (
-        <select
-          onChange={(e) => {
-            saveCurrentAccountAddress(e.target.value);
-          }}
-          value={currentAccountAddress || ""}
+        {accounts && accounts.length > 0 && (
+          <AccountSelector
+            accounts={accounts}
+            saveCurrentAccountAddress={saveCurrentAccountAddress}
+            currentAccountAddress={currentAccountAddress}
+          />
+        )}
+
+        {currentAccount && <WalletInfo currentAccount={currentAccount} />}
+        <button
+          onClick={disconnectWallet}
+          className="wallet-button wallet-button--disconnect"
         >
-          <option disabled value="">
-            Select an account
-          </option>
-          {accounts?.map((account) => (
-            <option key={account.address} value={account.address}>
-              {account.meta.name}
-            </option>
-          ))}
-        </select>
-      )}
+          Disconnect Wallet
+        </button>
 
-      {currentAccount && (
-        <pre>{JSON.stringify(currentAccount, undefined, 2)}</pre>
-      )}
-      {errorMessage && <p>{errorMessage}</p>}
-    </>
+        {errorMessage && <ErrorMessage errorMessage={errorMessage} />}
+      </div>
+    </main>
   );
 }
 
