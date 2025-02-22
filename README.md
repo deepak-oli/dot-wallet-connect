@@ -1,50 +1,83 @@
-# React + TypeScript + Vite
+# Polkadot Wallet Connect App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a **Polkadot Wallet Connect** app built with **React 19**, **Vite**, and **pnpm**. It allows users to connect their **Polkadot.js** wallet, fetch accounts, detect account changes, handle errors elegantly, and persist the selected account across page refreshes using **localStorage**.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+✅ Connects to **Polkadot.js Wallet** via `@polkadot/extension-dapp`\
+✅ Fetches available accounts and allows switching between them\
+✅ Detects real-time account changes in the extension\
+✅ Retrieves the **injector** for the selected account\
+✅ **Persists** the selected account across refreshes using `localStorage`\
+✅ Handles errors gracefully and provides user-friendly messages
 
-## Expanding the ESLint configuration
+### 🔮 Future Enhancements
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- Fetch and display **account balances**
+- Support for **multiple Polkadot wallet extensions**
+- Transaction signing functionality
+- Improved UI with enhanced account details
 
-- Configure the top-level `parserOptions` property like this:
+## 🛠️ Tech Stack
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- **Vite** - Fast development bundler
+- **React 19** - Modern frontend framework
+- **pnpm** - Fast, disk-efficient package manager
+- **@polkadot/api** (`^15.6.1`) - Polkadot API integration
+- **@polkadot/extension-dapp** (`^0.58.4`) - Wallet connection library
+
+## 📸 Screenshots
+
+### Connect Page
+
+![Connect Page](screenshots/connect-page.png)
+
+### Connect Approval
+
+![Connect Approval](screenshots/connect-approval.png)
+
+### Wallet Info
+
+![Connect Page](screenshots/wallet-info.png)
+
+### No Accounts Connected
+
+![Connect Page](screenshots/wallet-connected-with-no-accounts.png.png)
+
+## 🚀 Getting Started
+
+### 1️⃣ Install Dependencies
+
+```sh
+pnpm install
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### 2️⃣ Start the Development Server
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```sh
+pnpm dev
 ```
+
+### 3️⃣ Build for Production
+
+```sh
+pnpm build
+```
+
+### 4️⃣ Preview Production Build
+
+```sh
+pnpm preview
+```
+
+## 🔗 Connecting to the Wallet
+
+1. Install the [Polkadot.js Extension](https://polkadot.js.org/extension/).
+2. Open the app and click **Connect Wallet**.
+3. Select an account and approve the connection.
+4. The selected account will persist even after a refresh.
+
+## 🛠️ Configuration
+
+- The app **automatically detects changes** in the wallet (e.g., when accounts are added or removed).
+- Selected account is stored in **localStorage** to persist across sessions.
